@@ -1,0 +1,36 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    paths:
+      - 'llm/**'
+      - '.github/workflows/build-llm.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Set Tag
+        id: vars
+        run: |
+          BRANCH_NAME=${GITHUB_REF_NAME}
+          TAG=$(date +%Y%m%d)-$(git rev-parse --short HEAD)
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          docker build -t arsanoshin/news-llm:$IMAGE_TAG -t arsanoshin/news-llm:latest ./llm
+          docker push arsanoshin/news-llm:$IMAGE_TAG 
+          docker push arsanoshin/news-llm:latest

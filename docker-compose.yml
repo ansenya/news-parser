@@ -1,0 +1,27 @@
+services:
+  bot:
+    image: arsanoshin/news-bot:latest
+    environment:
+      BOT_TOKEN:
+      API_BASE_URL: http://llm:8000
+    volumes:
+      - "./db:/app/db"
+    restart: unless-stopped
+
+  llm:
+    image: arsanoshin/news-llm:latest
+    environment:
+      OPENAI_API_KEY:
+      PROXY_URL:
+    expose:
+      - 8000
+    restart: unless-stopped
+
+#  parser:
+#    image: arsanoshin/news-parser:latest
+#    environment:
+#      API_ID:
+#      API_HASH:
+#      CHANNEL: bbbreaking
+#      BOT_USERNAME: @newsdudebot
+#    restart: unless-stopped
