@@ -26,11 +26,11 @@ async def handle_start(message: Message) -> None:
     await message.answer(
         "Доступные команды:\n\n"
         "/summary - сводка (пока в разработке, может работать некорректно)\n"
-        "/summary internal - внутренняя сводка (в разработке)\n"
-        "/summary external - внешняя сводка (в разработке)\n\n"
+        "/summary_internal - внутренняя сводка (в разработке)\n"
+        "/summary_external - внешняя сводка (в разработке)\n\n"
         "/news - новости\n"
-        "/news internal - внутренние новости\n"
-        "/news external - внешние новости\n\n"
+        "/news_internal - внутренние новости\n"
+        "/news_external - внешние новости\n\n"
         "/stats - статистика по дням и новостям"
     )
 
