@@ -35,9 +35,6 @@ class SummaryResponse(BaseModel):
 
 @app.post("/classify_news")
 async def classify_news(request: ClassificationRequest):
-    time.sleep(randint(1, 5))
-    return ClassificationResponse(categories=["внутренняя"])
-
     categories = []
     for news in request.news_items:
         category = await llm.classify(news.text)
