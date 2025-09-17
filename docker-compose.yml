@@ -20,11 +20,15 @@ services:
       - 8000
     restart: unless-stopped
 
-#  parser:
-#    image: arsanoshin/news-parser:latest
-#    environment:
-#      API_ID: ${API_ID}
-#      API_HASH: ${API_HASH}
-#      CHANNEL: bbbreaking
-#      BOT_USERNAME: @newsdudebot
-#    restart: unless-stopped
+  parser:
+    image: arsanoshin/news-parser:latest
+    environment:
+      API_ID: ${API_ID}
+      API_HASH: ${API_HASH}
+      API_BASE_URL: http://llm:8000
+      PROXY_URL: ${PROXY_URL}
+      APP_ENV: prod
+      CHANNEL: bbbreaking
+    volumes:
+      - "./sessions:/app/sessions"
+    restart: unless-stopped
