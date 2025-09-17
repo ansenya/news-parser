@@ -124,26 +124,48 @@ def news_exists(text):
     return exists
 
 
-def get_news_count_by_weekday(date):
+def get_news_count_by_weekday(date=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
+
+    if date is None:
+        # Если не указаны год и неделя, используем предыдущую неделю
+        prev_week_info = cur.execute("""
+            SELECT strftime('%Y-%m-%d', 'now', '-7 days')
+        """).fetchone()
+        date = str(prev_week_info[0])
+
     query = """
-       SELECT CASE strftime('%w', date)
-           WHEN '0' THEN 'Воскресенье'
-           WHEN '1' THEN 'Понедельник'
-           WHEN '2' THEN 'Вторник'
-           WHEN '3' THEN 'Среда'
-           WHEN '4' THEN 'Четверг'
-           WHEN '5' THEN 'Пятница'
-           WHEN '6' THEN 'Суббота'
-           END  AS day_of_week,
-       COUNT(*) AS news_count
-    FROM news
-    where strftime('%W', date) = strftime('%W', (?))
-    GROUP BY strftime('%w', date)
-    ORDER BY strftime('%w', date);
+       WITH days AS (
+        SELECT '0' AS dow UNION ALL
+        SELECT '1' UNION ALL
+        SELECT '2' UNION ALL
+        SELECT '3' UNION ALL
+        SELECT '4' UNION ALL
+        SELECT '5' UNION ALL
+        SELECT '6'
+    )
+    SELECT 
+        CASE days.dow
+            WHEN '0' THEN 'Воскресенье'
+            WHEN '1' THEN 'Понедельник'
+            WHEN '2' THEN 'Вторник'
+            WHEN '3' THEN 'Среда'
+            WHEN '4' THEN 'Четверг'
+            WHEN '5' THEN 'Пятница'
+            WHEN '6' THEN 'Суббота'
+        END AS day_of_week,
+        COALESCE(n.news_count, 0) AS news_count
+    FROM days
+    LEFT JOIN (
+        SELECT strftime('%w', date) AS dow, COUNT(*) AS news_count
+        FROM news
+        WHERE strftime('%W', date) = strftime('%W', ?)
+        GROUP BY strftime('%w', date)
+    ) n ON days.dow = n.dow
+    ORDER BY days.dow;
     """
-    rows = cur.execute(query, date).fetchall()
+    rows = cur.execute(query, (date,)).fetchall()
     conn.close()
 
     return rows

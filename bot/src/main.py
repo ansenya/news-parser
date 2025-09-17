@@ -13,6 +13,7 @@ from aiogram.types import Message, ReactionTypeEmoji
 
 from csv_service import handle_data_command
 from message_service import save_news
+from stats_service import handle_stats_command
 from db import CATEGORY_INNER, CATEGORY_OUTER, init_db
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -23,7 +24,7 @@ dp = Dispatcher()
 @dp.message(CommandStart())
 async def handle_start(message: Message) -> None:
     await message.answer(
-        f"Команды:\n/summary\n/summary internal\n/summary external\n\n/news\n/news internal\n/news external")
+        f"Команды:\n/summary\n/summary internal\n/summary external\n\n/news\n/news internal\n/news external\n/stats - статистика по дням и новостям")
 
 
 @dp.message(Command('summary'))
@@ -54,6 +55,11 @@ async def handle_csv(message: Message):
             category = CATEGORY_OUTER
 
     await handle_data_command(message, 'news', category)
+
+
+@dp.message(Command('stats'))
+async def handle_stats(message: Message):
+    await handle_stats_command(message)
 
 
 @dp.message()
