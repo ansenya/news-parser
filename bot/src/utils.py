@@ -24,8 +24,11 @@ def news_to_csv_file(rows, filename="news.csv"):
     for row in rows:
         writer.writerow(row)
 
-    # Важно: отключаем wrapper чтобы буфер был чистым
+    # Сбрасываем буфер
+    wrapper.flush()
     wrapper.detach()
+
+    # Возвращаемся в начало
     buffer.seek(0)
     buffer.name = filename
 
