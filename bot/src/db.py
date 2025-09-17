@@ -125,6 +125,15 @@ def get_summary_by_week(year=None, week=None, category=None):
 def save_news(date, text, category):
     with get_db_connection() as conn:
         cur = conn.cursor()
-        query = "INSERT INTO news (date, text, category) VALUES (?, ?, ?)"
+        query = "INSERT OR IGNORE INTO news (date, text, category) VALUES (?, ?, ?)"
         cur.execute(query, (date, text, category))
         conn.commit()
+
+
+def news_exists(text):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM news WHERE text = ?", (text,))
+    exists = cur.fetchone() is not None
+    conn.close()
+    return exists
