@@ -24,7 +24,15 @@ dp = Dispatcher()
 @dp.message(CommandStart())
 async def handle_start(message: Message) -> None:
     await message.answer(
-        f"Команды:\n/summary\n/summary internal\n/summary external\n\n/news\n/news internal\n/news external\n/stats - статистика по дням и новостям")
+        "Доступные команды:\n\n"
+        "/summary - сводка (пока в разработке, может работать некорректно)\n"
+        "/summary internal - внутренняя сводка (в разработке)\n"
+        "/summary external - внешняя сводка (в разработке)\n\n"
+        "/news - новости\n"
+        "/news internal - внутренние новости\n"
+        "/news external - внешние новости\n\n"
+        "/stats - статистика по дням и новостям"
+    )
 
 
 @dp.message(Command('summary'))
@@ -42,6 +50,16 @@ async def handle_summary(message: Message):
     await handle_data_command(message, 'summary', category)
 
 
+@dp.message(Command('summary_internal'))
+async def handle_summary(message: Message):
+    await handle_data_command(message, 'summary', CATEGORY_INNER)
+
+
+@dp.message(Command('summary_external'))
+async def handle_summary(message: Message):
+    await handle_data_command(message, 'summary', CATEGORY_OUTER)
+
+
 @dp.message(Command('news'))
 async def handle_csv(message: Message):
     args = message.text.split()
@@ -55,6 +73,16 @@ async def handle_csv(message: Message):
             category = CATEGORY_OUTER
 
     await handle_data_command(message, 'news', category)
+
+
+@dp.message(Command('news_internal'))
+async def handle_csv(message: Message):
+    await handle_data_command(message, 'news', CATEGORY_INNER)
+
+
+@dp.message(Command('news_external'))
+async def handle_csv(message: Message):
+    await handle_data_command(message, 'news', CATEGORY_OUTER)
 
 
 @dp.message(Command('stats'))
