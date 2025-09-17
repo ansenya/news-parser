@@ -35,40 +35,27 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS summaries
             (
-                id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                year     INTEGER NOT NULL,
-                week     INTEGER NOT NULL,
-                text     TEXT,
-                category TEXT,               
-                UNIQUE (year, week, category)
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                week_start DATE NOT NULL,
+                text       TEXT,
+                category   TEXT,
+                UNIQUE (week_start, category)
             );
         """)
         conn.commit()
 
 
-def get_news_by_week(year=None, week=None, category=None):
-    """
-    Получить новости за указанную неделю или текущую неделю
-
-    Args:
-        year: год (если None - используется текущая неделя)
-        week: номер недели (если None - используется текущая неделя)
-        category: категория новостей (внутренняя/внешняя), если None - все категории
-
-    Returns:
-        Список новостей за указанный период
-    """
+def get_news_by_week(date=None, category=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     params = []
     where_clauses = []
 
-    if year is not None and week is not None:
+    if date is not None:
         # Конкретная неделя
-        where_clauses.append("strftime('%Y', date) = ?")
-        where_clauses.append("strftime('%W', date) = ?")
-        params.extend([str(year), str(week).zfill(2)])
+        where_clauses.append("strftime('%Y-%W', date) = strftime('%Y-%W', ?)")
+        params.extend(date)
     else:
         # Прошедшая неделя
         where_clauses.append("strftime('%Y-%W', date) = strftime('%Y-%W', 'now', '-7 days')")
@@ -89,34 +76,32 @@ def get_news_by_week(year=None, week=None, category=None):
     return rows
 
 
-def get_summary_by_week(year=None, week=None, category=None):
+def get_summary_by_week(date=None, category=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    if year is None or week is None:
+    if date is None:
         # Если не указаны год и неделя, используем предыдущую неделю
         prev_week_info = cur.execute("""
-            SELECT 
-                strftime('%Y', 'now', '-7 days') as year,
-                strftime('%W', 'now', '-7 days') as week
+            SELECT strftime('%Y-%m-%d', 'now', '-7 days')
         """).fetchone()
-        year, week = int(prev_week_info[0]), int(prev_week_info[1])
+        date = str(prev_week_info[0])
 
     if category:
         query = """
-            SELECT year, week, text, category 
+            SELECT week_start, text, category 
             FROM summaries 
-            WHERE year = ? AND week = ? AND category = ?
+            WHERE strftime('%Y-%W', week_start) = strftime('%Y-%W', ?) AND category = ?
         """
-        rows = cur.execute(query, (year, week, category)).fetchall()
+        rows = cur.execute(query, (date, category)).fetchall()
     else:
         query = """
-            SELECT year, week, text, category 
+            SELECT week_start, text, category 
             FROM summaries 
-            WHERE year = ? AND week = ?
+            WHERE strftime('%Y-%W', week_start) = strftime('%Y-%W', ?)
             ORDER BY category
         """
-        rows = cur.execute(query, (year, week)).fetchall()
+        rows = cur.execute(query, (date,)).fetchall()
 
     conn.close()
     return rows
@@ -137,3 +122,28 @@ def news_exists(text):
     exists = cur.fetchone() is not None
     conn.close()
     return exists
+
+
+def get_news_count_by_weekday(date):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    query = """
+       SELECT CASE strftime('%w', date)
+           WHEN '0' THEN 'Воскресенье'
+           WHEN '1' THEN 'Понедельник'
+           WHEN '2' THEN 'Вторник'
+           WHEN '3' THEN 'Среда'
+           WHEN '4' THEN 'Четверг'
+           WHEN '5' THEN 'Пятница'
+           WHEN '6' THEN 'Суббота'
+           END  AS day_of_week,
+       COUNT(*) AS news_count
+    FROM news
+    where strftime('%W', date) = strftime('%W', (?))
+    GROUP BY strftime('%w', date)
+    ORDER BY strftime('%w', date);
+    """
+    rows = cur.execute(query, date).fetchall()
+    conn.close()
+
+    return rows
