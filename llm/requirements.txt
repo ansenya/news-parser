@@ -1,2 +1,3 @@
 fastapi[standard]
 openai
+httpx[socks]
