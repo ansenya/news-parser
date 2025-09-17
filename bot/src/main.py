@@ -9,7 +9,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram.types import Message, ReactionTypeEmoji
 
 from csv_service import handle_data_command
 from message_service import save_news
@@ -61,9 +61,9 @@ async def handle_message(message: Message):
     if message.forward_origin.chat.username == "bbbreaking":
         try:
             await save_news(message)
-            await message.reply('Сохранено', disable_notification=True)
+            await message.react([ReactionTypeEmoji(emoji="👌")])
         except sqlite3.IntegrityError:
-            await message.reply('Это сообщение уже сохранено', disable_notification=True)
+            await message.react([ReactionTypeEmoji(emoji="🗿")])
         except RuntimeError as e:
             error_msg = escape(str(e))
             await message.reply(f"Не получилось получить категорию: {error_msg}",
