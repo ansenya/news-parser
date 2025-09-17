@@ -29,7 +29,10 @@ def init_db():
                 text     TEXT UNIQUE,
                 category TEXT 
             );
-            
+        """)
+        conn.commit()
+
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS summaries
             (
                 id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +43,6 @@ def init_db():
                 UNIQUE (year, week, category)
             );
         """)
-
         conn.commit()
 
 

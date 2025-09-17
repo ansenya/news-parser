@@ -4,6 +4,7 @@ services:
     environment:
       BOT_TOKEN:
       API_BASE_URL: http://llm:8000
+      APP_ENV: prod
     volumes:
       - "./db:/app/db"
     restart: unless-stopped
