@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
 
 DB_PATH = "/app/db/news.db" if os.getenv("APP_ENV") == "prod" else "../db/news.db"
 
@@ -45,20 +46,19 @@ def init_db():
         conn.commit()
 
 
-def get_news_by_week(date=None, category=None):
+def get_news_by_week(from_date: datetime, to_date: datetime, category=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     params = []
     where_clauses = []
 
-    if date is not None:
-        # Конкретная неделя
-        where_clauses.append("strftime('%Y-%W', date) = strftime('%Y-%W', ?)")
-        params.extend(date)
-    else:
-        # Прошедшая неделя
-        where_clauses.append("strftime('%Y-%W', date) = strftime('%Y-%W', 'now', '-7 days')")
+    if from_date is not None:
+        where_clauses.append("date >= ?")
+        params.append(from_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat().replace('T', ' '))
+    if to_date is not None:
+        where_clauses.append("date <= ?")
+        params.append(to_date.replace(hour=23, minute=59, second=59, microsecond=999999).isoformat().replace('T', ' '))
 
     if category:
         where_clauses.append("category = ?")

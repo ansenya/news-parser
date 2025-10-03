@@ -1,33 +1,33 @@
-from aiogram.types import BufferedInputFile, Message
+from datetime import datetime
+
+from aiogram.types import BufferedInputFile, Message, CallbackQuery
 from utils import news_to_csv_file
 from db import get_news_by_week, get_summary_by_week, CATEGORY_INNER, CATEGORY_OUTER
 from typing import Optional, List, Tuple
 
 
-async def handle_data_command(
-        message: Message,
-        data_type: str,  # 'news' или 'summary'
-        category: Optional[str] = None
+async def handle_csv_command(
+        callback: CallbackQuery,
+        news_type: str,  # all/internal/external
+        from_date: datetime,
+        to_date: datetime,
 ):
-    """
-    Универсальный обработчик для новостей и сводок
-    """
-    # Выбираем функцию для получения данных
-    if data_type == 'news':
-        data_func = get_news_by_week
-        data_name = 'новостей'
-        base_filename = "news"
-    else:
-        data_func = get_summary_by_week
-        data_name = 'сводок'
-        base_filename = "summary"
+    data_name = 'новостей'
+    base_filename = "news"
+    category = None
+    if news_type == 'internal':
+        category = CATEGORY_INNER
+    elif news_type == 'external':
+        category = CATEGORY_OUTER
 
     # Получаем данные
-    data = data_func(category=category)
+    data = get_news_by_week(from_date, to_date, category)
 
     if not data:
         category_text = get_category_display_name(category)
-        await message.answer(f'{data_name.capitalize()} {category_text} за прошедшую неделю нет.')
+        await callback.message.answer(
+            f'{data_name.capitalize()} {category_text} за прошедшую неделю нет.'
+        )
         return
 
     # Создаем CSV файл
@@ -36,12 +36,12 @@ async def handle_data_command(
 
     # Формируем caption
     category_text = get_category_display_name(category)
-    record_count = f" ({len(data)} записей)" if data_type == 'news' else ""
+    record_count = f" ({len(data)} записей)"
     caption = f"{category_text.capitalize()} {data_name} за прошедшую неделю{record_count}"
 
     # Отправляем файл
     csv_file = BufferedInputFile(csv_buffer.getvalue(), filename)
-    await message.answer_document(document=csv_file, caption=caption)
+    await callback.message.answer_document(document=csv_file, caption=caption)
 
 
 def get_category_display_name(category: Optional[str]) -> str:
